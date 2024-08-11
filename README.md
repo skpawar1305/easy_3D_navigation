@@ -13,9 +13,10 @@ ros2 service call /navigation/follow_path std_srvs/srv/SetBool "{data: true}"
 2D occupancy grid is created using the z distance difference between neighbouring topmost cells, which is then used for navigation. Goal can be directly given using 2D initial pose of Rviz2. The issue with this one is, it won't plan under negotiation as the whole thing will be considered as an obstacle in 2D map. This worked perfectly well during RRL2024, without negotiation bars ofcourse.
 
 ## plan_3d_path.py
-A path is planned through occupied cells, if
+A path is planned through occupied cells. If
 1) neighbouring cell is not in a z threshold
-2} any cells are found within certain vertical distance,
-4) if, at a certain height, cells are occupied within a certain radius
+2) any cells are found within certain vertical distance above,
+3) if, at a certain height, cells are occupied within a certain radius
 then that cell is ignored.
+
 Goal can be given using an interactive /goal_marker in Rviz2 and then just publishing to Rviz2's 2D initial pose.
