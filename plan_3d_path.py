@@ -125,35 +125,26 @@ def astar(array, start, goal):
         return not any(is_occupied_space(c) for c in coords_to_check)
 
     def is_cylinder_collision_free(coord, radius):
-        # Convert radius from meters to voxel grid units
-        grid_radius = int(radius / voxel_size)
-        BASE_OFFSET = 0.4
-        grid_z_offset = int(BASE_OFFSET / voxel_size)
+        # Convert radius and base offset from meters to voxel grid units
+        grid_radius = radius / voxel_size
+        grid_z_start = int(0.3 / voxel_size)
+        grid_z_end = int(0.6 / voxel_size)
 
-        # Precompute the squared radius
-        radius_squared = (radius / voxel_size) ** 2
-
-        # # Use list comprehension to create a list of coordinates to check
-        # coords_to_check = [
-        #     (coord[0] + i, coord[1] + j, coord[2] + k)
-        #     for i in range(-grid_radius, grid_radius + 1)
-        #     for j in range(-grid_radius, grid_radius + 1)
-        #     for k in range(int(0.3 / voxel_size), int(0.6 / voxel_size))
-        #     if i**2 + j**2 <= radius_squared
-        # ]
-        # Use list comprehension to create a list of coordinates to check
-        coords_to_check = [
-            (coord[0] + i, coord[1] + j, coord[2] + grid_z_offset)
-            for i in range(-grid_radius, grid_radius + 1)
-            for j in range(-grid_radius, grid_radius + 1)
-            if i**2 + j**2 <= radius_squared
-        ]
-
-        # Filter out-of-bounds coordinates
-        coords_to_check = [c for c in coords_to_check if is_within_bounds(c)]
-
-        # Check all coordinates in one batch if possible
-        return not any(is_occupied_space(c) for c in coords_to_check)
+        # Calculate the number of points to check around the circumference
+        num_points = int(2 * math.pi * grid_radius)
+        
+        # Iterate over the points on the circumference
+        for angle in range(0, num_points, 2):
+            theta = 2 * math.pi * angle / num_points
+            i = int(grid_radius * math.cos(theta))
+            j = int(grid_radius * math.sin(theta))
+            
+            for k in range(grid_z_start, grid_z_end + 1, 2):
+                check_coord = (coord[0] + i, coord[1] + j, coord[2] + k)
+                if is_within_bounds(check_coord) and is_occupied_space(check_coord):
+                    return False  # Early exit if any occupied space is found
+        
+        return True  # No collision found
 
     open_list = []
     heapq.heappush(open_list, (0, start))  # Priority queue with (f-score, node)
@@ -406,6 +397,9 @@ class PointCloudToGrid(Node):
         self.get_logger().info(f"Searching for path ...")
         
         # Define goal coordinates in the same reference frame as the point cloud
+        if not hasattr(self, "goal_position"):
+            self.get_logger().warn(f"Set the goal position using /goal_marker/update in rviz2")
+            return
         goal_coordinates_raw = self.goal_position
         start_coordinates_raw = self.robot_foot_location
 
