@@ -183,7 +183,7 @@ def astar(array, start, goal):
                     0 <= neighbor[2] < array.shape[2]):
                 continue
 
-            # Plan thorough occupied cells only
+            # Plan through occupied cells only
             if array[neighbor[0], neighbor[1], neighbor[2]] != 100:
                 continue
 
