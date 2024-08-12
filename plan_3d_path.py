@@ -142,8 +142,12 @@ def find_nearest_3d_point(x, y, z, array_3d):
 
 
 def astar(array, start, goal):
-    neighbors = [(i, j, k) for i in range(-1, 2) for j in range(-1, 2) for k in range(-1, 2) if not (i == 0 and j == 0 and k == 0)]
-
+    neighbors = [
+    (1, 0, 0), (-1, 0, 0),   # x-direction
+    (0, 1, 0), (0, -1, 0),   # y-direction
+    (0, 0, 1), (0, 0, -1),   # z-direction
+    (1, 1, 0), (1, -1, 0), (-1, 1, 0), (-1, -1, 0)  # x-y plane edges only
+]
     def heuristic(a, b):
         # Euclidean distance as heuristic
         return ((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2) ** 0.5
