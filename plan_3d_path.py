@@ -17,6 +17,7 @@ import numpy as np
 import math
 import heapq
 import open3d as o3d
+import scipy.interpolate as si
 
 from visualization_msgs.msg import InteractiveMarker, InteractiveMarkerControl, Marker
 from interactive_markers.interactive_marker_server import InteractiveMarkerServer
@@ -32,6 +33,44 @@ VOXEL_SIZE = 0.1
 ROBOT_RADIUS = 0.35
 
 IS_SIMULATION = False
+
+
+def bspline_planning(array, sn):
+    try:
+        array = np.array(array)
+        x = array[:, 0]
+        y = array[:, 1]
+        z = array[:, 2]
+        N = 2  # Degree of the spline
+        t = np.arange(len(x))  # Knot vector
+
+        # Generate B-spline representations for x, y, z
+        x_tup = si.splrep(t, x, k=N)
+        y_tup = si.splrep(t, y, k=N)
+        z_tup = si.splrep(t, z, k=N)
+
+        # Extend the coefficients to allow for full interpolation
+        x_list = list(x_tup)
+        x_list[1] = np.pad(x_list[1], (0, 4), mode='constant')
+
+        y_list = list(y_tup)
+        y_list[1] = np.pad(y_list[1], (0, 4), mode='constant')
+
+        z_list = list(z_tup)
+        z_list[1] = np.pad(z_list[1], (0, 4), mode='constant')
+
+        # Interpolate the path at sn evenly spaced intervals
+        ipl_t = np.linspace(0.0, len(x) - 1, sn)
+        rx = si.splev(ipl_t, x_list)
+        ry = si.splev(ipl_t, y_list)
+        rz = si.splev(ipl_t, z_list)
+
+        # Combine interpolated x, y, z into a path
+        path = list(zip(rx, ry, rz))
+    except (TypeError, ValueError):
+        path = array.tolist()
+
+    return path
 
 
 def world_to_grid(world_coords, min_bound, voxel_size):
@@ -382,6 +421,7 @@ class PointCloudToGrid(Node):
             return
         
         self.get_logger().info("Path to the target found")
+        path = bspline_planning(path, len(path)*5)
 
         path_marker = Marker()
         path_marker.header = msg.header
