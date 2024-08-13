@@ -143,11 +143,23 @@ def find_nearest_3d_point(x, y, z, array_3d):
 
 def astar(array, start, goal):
     neighbors = [
-    (1, 0, 0), (-1, 0, 0),   # x-direction
-    (0, 1, 0), (0, -1, 0),   # y-direction
-    (0, 0, 1), (0, 0, -1),   # z-direction
-    (1, 1, 0), (1, -1, 0), (-1, 1, 0), (-1, -1, 0)  # x-y plane edges only
-]
+        # 3D diagonals (corners) - prioritized first
+        (1, 1, 1), (1, 1, -1), (1, -1, 1), (1, -1, -1),
+        (-1, 1, 1), (-1, 1, -1), (-1, -1, 1), (-1, -1, -1),
+        # x-y plane diagonals
+        (1, 1, 0), (1, -1, 0), (-1, 1, 0), (-1, -1, 0),
+        # x-z plane diagonals
+        (1, 0, 1), (1, 0, -1), (-1, 0, 1), (-1, 0, -1),
+        # y-z plane diagonals
+        (0, 1, 1), (0, 1, -1), (0, -1, 1), (0, -1, -1),
+        # x-direction
+        (1, 0, 0), (-1, 0, 0),
+        # y-direction
+        (0, 1, 0), (0, -1, 0),
+        # z-direction
+        (0, 0, 1), (0, 0, -1)
+    ]
+
     def heuristic(a, b):
         # Euclidean distance as heuristic
         return ((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2) ** 0.5
@@ -175,7 +187,7 @@ def astar(array, start, goal):
     def is_cylinder_collision_free(coord, radius):
         # Convert radius and base offset from meters to voxel grid units
         grid_radius = radius / VOXEL_SIZE
-        grid_z_start = int(0.3 / VOXEL_SIZE)
+        grid_z_start = int(0.4 / VOXEL_SIZE)
         grid_z_end = int(0.6 / VOXEL_SIZE)
 
         # Calculate the number of points to check around the circumference
